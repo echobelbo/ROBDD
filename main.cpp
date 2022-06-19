@@ -11,6 +11,7 @@ int main(void)
 	printBDDNode(root, "");
 	root = ROBDDmain(root);
 	printBDDNode(root, "");
+	BDDGraph("a", root);
 	return 0;
 }
 

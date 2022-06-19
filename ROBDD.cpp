@@ -3,8 +3,9 @@
 #include<iostream>
 #include<string>
 #include<stack>
+#include<fstream>
 
-
+ofstream out_path;
 int pow(int pow)
 {
 	int result = 1;
@@ -24,7 +25,7 @@ BDDNode* initBDDNode(int mode, int value, BDDNode* father)
 	newNode->fatherptr = father;
 	newNode->leftptr = NULL;
 	newNode->rightptr = NULL;
-	newNode->name = "";
+	newNode->name = -1;
 	if (newNode->type == 2)
 	{
 		newNode->leftptr = initBDDNode(0, 0, newNode);
@@ -278,4 +279,61 @@ BDDNode* ROBDDmain(BDDNode* root)
 		return new_root;
 	}//
 	exit(-2);
+}
+
+void BDDGraph(string output, BDDNode* root)
+{
+	char* out;
+	output += ".dot";
+	out = (char*)output.c_str();
+	out_path.open(out, ios::ate);
+	//if (out_path.is_open()) cout << "open success1" << endl;
+	out_path << "digraph G{" << endl;
+	out_path.close();
+	BDDDraw(out, root, 0);
+	out_path.open(out, ios::app);
+	//if (out_path.is_open()) cout << "open success3" << endl;
+	out_path << "}" << endl;
+	out_path.close();
+	return;
+
+}
+
+int BDDDraw(char* output, BDDNode* root, int node_cnt)
+{
+	out_path.open(output, ios::app);
+	//if (out_path.is_open()) cout << "open success2" << endl;
+	if (root->name == -1)
+	{
+		root->name = node_cnt++;
+		if (root->type == 2)
+		{
+			out_path << root->name << "[label = \" " << root->value << "\"]" << endl;
+			out_path.close();
+			node_cnt = BDDDraw(output, root->leftptr, node_cnt);
+			node_cnt = BDDDraw(output, root->rightptr, node_cnt);
+			out_path.open(output, ios::app);
+			out_path << root->name << "->" << root->leftptr->name << "[color = \"#242038\"];" << endl;
+			out_path << root->name << "->" << root->rightptr->name << "[color = \"#FF595E\"];" << endl;
+		}
+		else if (root->type == 0)
+		{
+			if (root->value == 0)
+			{
+				out_path << root->name << "[label = \" False \"]" << endl;
+			}
+			else
+			{
+				
+				out_path << root->name << "[label = \" True \"]" << endl;
+			}
+		}
+		else
+		{
+			//等待再实现
+		}
+		
+	}
+	out_path.close();
+	return node_cnt;
 }
