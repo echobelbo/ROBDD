@@ -24,6 +24,7 @@ BDDNode* initBDDNode(int mode, int value, BDDNode* father)
 	newNode->fatherptr = father;
 	newNode->leftptr = NULL;
 	newNode->rightptr = NULL;
+	newNode->name = "";
 	if (newNode->type == 2)
 	{
 		newNode->leftptr = initBDDNode(0, 0, newNode);
@@ -163,4 +164,118 @@ BDDNode* GenerateBDDtree(string input)
 	}
 	BDDNode* root = BDD_stack.top();
 	return root;
+}
+BDDNode* ROBDDmain(BDDNode* root)
+{
+	BDDNode* left = root->leftptr;
+	BDDNode* right = root->rightptr;
+	if (left->type == 1)
+	{
+		left = ROBDDmain(left);
+		root->leftptr = left;
+	}
+	if (right->type == 1)
+	{
+		right = ROBDDmain(right);
+		root->rightptr = right;
+	}
+	if (left->type == 0 && right->type == 0)
+	{
+		switch (root->value)
+		{
+		case(0):root->value = right->value & left->value; break;
+		case(1):root->value = right->value | left->value; break;
+		case(2):root->value = left->value ? (right->value ? 1 : 0) : 1; break;
+		case(3):root->value = (left->value == right->value) ? 1 : 0; break;
+		default:
+			break;
+		}
+		root->type = 0;
+		//free(left);
+		//free(right);
+		return root;
+	}//如果运算符节点左右都为叶子节点，进行运算
+	if (left->type == 2 && right->type == 2 && left->value == right->value)
+	{
+		BDDNode* new_left, * new_right, * new_root;
+		new_root = initBDDNode(2, left->value, root->fatherptr);
+		new_left = initBDDNode(1, root->value, new_root);
+		new_right = initBDDNode(1, root->value, new_root);
+
+		new_left->leftptr = left->leftptr;
+		new_left->rightptr = right->leftptr;
+		new_right->leftptr = left->rightptr;
+		new_right->rightptr = right->rightptr;
+		//free(root);
+		//free(left);
+		//free(right);
+		new_left = ROBDDmain(new_left);
+		new_right = ROBDDmain(new_right);
+		if (new_left->type == 0 && new_right->type == 0 && new_left->value == new_right->value)
+		{
+			new_left->fatherptr = root->fatherptr;
+			//free(new_root);
+			//free(new_left);
+			return new_left;
+		}
+		new_root->leftptr = new_left;
+		new_root->rightptr = new_right;
+		return new_root;
+	}//如果左右节点为一样的命题节点
+	if (left->type == 2 && (right->type == 0 || left->value < right->value))
+	{
+		BDDNode* new_left, * new_right, * new_root;
+		new_root = initBDDNode(2, left->value, root->fatherptr);
+		new_left = initBDDNode(1, root->value, new_root);
+		new_right = initBDDNode(1, root->value, new_root);
+
+		new_left->leftptr = left->leftptr;
+		new_left->rightptr = root->rightptr;
+		new_right->leftptr = left->rightptr;
+		new_right->rightptr = root->rightptr;
+		//free(root);
+		//free(left);
+		//free(right);
+		new_left = ROBDDmain(new_left);
+		new_right = ROBDDmain(new_right);
+		if (new_left->type == 0 && new_right->type == 0 && new_left->value == new_right->value)
+		{
+			new_left->fatherptr = root->fatherptr;
+			//free(new_root);
+			//free(new_left);
+			return new_left;
+		}
+		new_root->leftptr = new_left;
+		new_root->rightptr = new_right;
+
+		return new_root;
+	}//左侧节点更小
+	if (right->type == 2 && (left->type == 0 || right->value < left->value))
+	{
+		BDDNode* new_left, * new_right, * new_root;
+		new_root = initBDDNode(2, right->value, root->fatherptr);
+		new_left = initBDDNode(1, root->value, new_root);
+		new_right = initBDDNode(1, root->value, new_root);
+
+		new_left->leftptr = root->leftptr;
+		new_left->rightptr = right->leftptr;
+		new_right->leftptr = root->leftptr;
+		new_right->rightptr = right->rightptr;
+		//free(root);
+		//free(left);
+		//free(right);
+		new_left = ROBDDmain(new_left);
+		new_right = ROBDDmain(new_right);
+		if (new_left->type == 0 && new_right->type == 0 && new_left->value == new_right->value)
+		{
+			new_left->fatherptr = root->fatherptr;
+			//free(new_root);
+			//free(new_left);
+			return new_left;
+		}
+		new_root->leftptr = new_left;
+		new_root->rightptr = new_right;
+		return new_root;
+	}//
+	exit(-2);
 }

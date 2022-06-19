@@ -9,5 +9,8 @@ int main(void)
 	cin >> input;
 	BDDNode* root = GenerateBDDtree(input);
 	printBDDNode(root, "");
+	root = ROBDDmain(root);
+	printBDDNode(root, "");
 	return 0;
 }
+
